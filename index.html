@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Gestor Financeiro</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        #campo-outros { display: none; margin-top: 10px; padding: 10px; border: 1px dashed #ccc; }
+        .btn-salvar { 
+            background: #2980b9; color: white; padding: 12px; border: none; 
+            border-radius: 5px; cursor: pointer; width: 100%; margin-top: 20px; font-weight: bold;
+        }
+        .btn-salvar:hover { background: #3498db; }
+        .saldo-negativo { color: #e74c3c !important; }
+    </style>
+</head>
+<body>
+    <div class="container" id="conteudo-para-print">
+        <header>
+            <h1>Gestor Financeiro</h1>
+        </header>
+
+        <section class="summary">
+            <div class="card">
+                <h3>Meu Salário</h3>
+                <input type="number" id="salario-input" value="3000" step="0.01">
+            </div>
+            <div class="card">
+                <h3>Total Pago</h3>
+                <p id="total-pago">R$ 0,00</p>
+            </div>
+            <div class="card saldo">
+                <h3>Saldo Atual</h3>
+                <p id="saldo-atual">R$ 3.000,00</p>
+            </div>
+        </section>
+
+        <main>
+            <section class="section-box">
+                <h2>Contas Fixas</h2>
+                <ul class="bill-list">
+                    <li><input type="checkbox" class="conta-fixa" data-value="1200.00" id="Energia"><label for="Energia">Energia - R$ 1.200,00</label></li>
+                    <li><input type="checkbox" class="conta-fixa" data-value="150.00" id="Aguá"><label for="Aguá">Água - R$ 150,00</label></li>
+                    <li><input type="checkbox" class="conta-fixa" data-value="100.00" id="internet"><label for="internet">Internet - R$ 100,00</label></li>
+                    <li><input type="checkbox" class="conta-fixa" data-value="100.00" id="tv"><label for="tv">TV - R$ 100,00</label></li>
+                    <li>
+                        <input type="checkbox" class="conta-fixa" id="outros-check">
+                        <label for="outros-check">Outros (Gasto Extra)</label>
+                    </li>
+                </ul>
+
+                <div id="campo-outros">
+                    <input type="text" id="nome-outro" placeholder="O que você comprou?">
+                    <input type="number" id="valor-outro" placeholder="Valor R$" step="0.01">
+                </div>
+            </section>
+            
+            <button class="btn-salvar" onclick="tirarPrint()">Salvar Relatório (Baixar Imagem)</button>
+        </main>
+    </div>
+
+    <script>
+        const salarioInput = document.getElementById('salario-input');
+        const totalPagoDisplay = document.getElementById('total-pago');
+        const saldoAtualDisplay = document.getElementById('saldo-atual');
+        const checkboxes = document.querySelectorAll('.conta-fixa');
+        const checkOutros = document.getElementById('outros-check');
+        const campoOutros = document.getElementById('campo-outros');
+        const valorOutroInput = document.getElementById('valor-outro');
+
+        function atualizarContas() {
+            let salarioBase = parseFloat(salarioInput.value) || 0;
+            let totalPago = 0;
+
+            // Mostrar ou esconder campo de outros
+            if (checkOutros.checked) {
+                campoOutros.style.display = 'block';
+            } else {
+                campoOutros.style.display = 'none';
+                valorOutroInput.value = ""; 
+            }
+
+            // Somar contas fixas marcadas
+            checkboxes.forEach(check => {
+                if (check.checked && check.id !== 'outros-check') {
+                    totalPago += parseFloat(check.getAttribute('data-value'));
+                }
+            });
+
+            // Somar valor extra se o campo outros estiver ativo
+            if (checkOutros.checked) {
+                let valorExtra = parseFloat(valorOutroInput.value) || 0;
+                totalPago += valorExtra;
+            }
+
+            let saldoFinal = salarioBase - totalPago;
+
+            // Atualização visual
+            totalPagoDisplay.innerText = totalPago.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+            saldoAtualDisplay.innerText = saldoFinal.toLocaleString('pt-br', {style: 'currency', currency: 'BRL'});
+
+            // Cor de alerta para saldo negativo
+            if (saldoFinal < 0) {
+                saldoAtualDisplay.classList.add('saldo-negativo');
+            } else {
+                saldoAtualDisplay.classList.remove('saldo-negativo');
+            }
+        }
+
+        // Listeners para atualizar os cálculos em tempo real
+        checkboxes.forEach(check => check.addEventListener('change', atualizarContas));
+        salarioInput.addEventListener('input', atualizarContas);
+        valorOutroInput.addEventListener('input', atualizarContas);
+
+        // Função para tirar o print da tela e baixar
+        function tirarPrint() {
+            const areaPrint = document.getElementById('conteudo-para-print');
+            html2canvas(areaPrint).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'meu-relatorio-financeiro.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        // Inicialização
+        atualizarContas();
+    </script>
+</body>
+</html>
